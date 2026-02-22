@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>LexAI – Legal Rights Assistant</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --navy: #0b1628;
+  --navy2: #101f38;
+  --navy3: #162844;
+  --teal: #00c9a7;
+  --teal2: #00a88d;
+  --teal3: #00e6c0;
+  --gold: #f5c842;
+  --text: #e8f0fe;
+  --text2: #8fa3c4;
+  --border: rgba(0,201,167,0.15);
+  --card: rgba(22,40,68,0.8);
+  --glass: rgba(11,22,40,0.95);
+}
+[data-theme="light"] {
+  --navy: #f0f4ff;
+  --navy2: #e4ecff;
+  --navy3: #d6e3ff;
+  --teal: #0076ff;
+  --teal2: #0062d6;
+  --teal3: #3399ff;
+  --gold: #d4960a;
+  --text: #0b1628;
+  --text2: #4a6080;
+  --border: rgba(0,118,255,0.2);
+  --card: rgba(255,255,255,0.9);
+  --glass: rgba(240,244,255,0.98);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;overflow:hidden;transition:all 0.3s}
+h1,h2,h3,.logo-text{font-family:'Syne',sans-serif}
+
+/* ANIMATIONS */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes balance{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-ring{0%{transform:scale(0.9);opacity:1}100%{transform:scale(1.4);opacity:0}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes dotBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.float-anim{animation:float 3s ease-in-out infinite}
+.balance-anim{animation:balance 2s ease-in-out infinite}
+.fade-up{animation:fadeUp 0.4s ease forwards}
+
+/* MESH BACKGROUND */
+.mesh-bg{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(0,201,167,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(0,118,255,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 60% 80%, rgba(245,200,66,0.05) 0%, transparent 50%),
+              var(--navy);
+}
+[data-theme="light"] .mesh-bg{
+  background: radial-gradient(ellipse at 20% 50%, rgba(0,118,255,0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(0,201,167,0.06) 0%, transparent 50%),
+              var(--navy);
+}
+
+/* LAYOUT */
+.app-shell{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto}
+@media(min-width:768px){.app-shell{max-width:100%;flex-direction:row}}
+
+/* TOP BAR */
+.top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;
+  background:var(--glass);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  position:sticky;top:0;z-index:50;
+}
+.logo-wrap{display:flex;align-items:center;gap:8px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 16px rgba(0,201,167,0.3)}
+.logo-text{font-size:20px;font-weight:800;color:var(--text)}
+.logo-text span{color:var(--teal)}
+.loc-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);background:var(--card);border:1px solid var(--border);padding:5px 10px;border-radius:20px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.loc-badge:hover{border-color:var(--teal);color:var(--teal)}
+.top-actions{display:flex;align-items:center;gap:8px}
+.icon-btn{width:34px;height:34px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all 0.2s;position:relative}
+.icon-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+/* MAIN CONTENT */
+.main-content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.main-content::-webkit-scrollbar{width:3px}
+.main-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* SCREENS */
+.screen{display:none;flex-direction:column;flex:1;min-height:0}
+.screen.active{display:flex}
+
+/* HOME SCREEN */
+.home-hero{padding:32px 20px 20px;text-align:center;flex-shrink:0}
+.hero-icon{width:80px;height:80px;background:linear-gradient(135deg,rgba(0,201,167,0.15),rgba(0,201,167,0.05));border:2px solid rgba(0,201,167,0.3);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 20px;box-shadow:0 8px 32px rgba(0,201,167,0.15)}
+.hero-title{font-size:26px;font-weight:800;line-height:1.2;margin-bottom:10px;color:var(--text)}
+.hero-title span{color:var(--teal)}
+.hero-sub{font-size:13px;color:var(--text2);line-height:1.6;max-width:320px;margin:0 auto}
+
+.chips-section{padding:0 18px 16px}
+.chips-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;padding-left:2px}
+.chips-grid{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 14px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.2s;white-space:nowrap;font-family:'Inter',sans-serif}
+.chip:hover,.chip.active{background:rgba(0,201,167,0.12);border-color:var(--teal);color:var(--teal)}
+
+/* INPUT AREA */
+.input-wrap{padding:12px 18px 8px;flex-shrink:0}
+.input-box{background:var(--card);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color 0.2s}
+.input-box:focus-within{border-color:var(--teal)}
+.input-top{display:flex;align-items:flex-end;gap:8px;padding:12px 12px 8px}
+.input-box textarea{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;resize:none;min-height:22px;max-height:100px;placeholder-color:var(--text2)}
+.input-box textarea::placeholder{color:var(--text2)}
+.input-actions{display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid var(--border)}
+.ia-btn{width:32px;height:32px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all 0.2s}
+.ia-btn:hover{background:var(--border);color:var(--teal)}
+.ia-btn.recording{color:#ef4444;animation:pulse-ring 1s infinite}
+.send-btn{width:36px;height:36px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;margin-left:auto;transition:all 0.2s;flex-shrink:0;box-shadow:0 4px 12px rgba(0,201,167,0.3)}
+.send-btn:hover{transform:scale(1.05);box-shadow:0 6px 20px rgba(0,201,167,0.4)}
+.send-btn:disabled{opacity:0.4;transform:none;cursor:not-allowed}
+
+.suggestions-row{display:flex;gap:6px;padding:0 18px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.suggestions-row::-webkit-scrollbar{display:none}
+.suggestion{padding:6px 12px;background:var(--card);border:1px solid var(--border);border-radius:12px;font-size:11px;color:var(--text2);white-space:nowrap;cursor:pointer;transition:all 0.2s;flex-shrink:0}
+.suggestion:hover{border-color:var(--teal);color:var(--teal)}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  display:flex;align-items:center;
+  background:var(--glass);
+  border-top:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  padding:8px 0 max(8px, env(safe-area-inset-bottom));
+  flex-shrink:0;
+}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 0;transition:all 0.2s}
+.nav-icon{font-size:20px;transition:all 0.2s}
+.nav-label{font-size:10px;color:var(--text2);transition:all 0.2s;font-weight:500}
+.nav-item.active .nav-label{color:var(--teal)}
+.nav-item.active .nav-icon{transform:scale(1.1)}
+.nav-dot{width:4px;height:4px;background:var(--teal);border-radius:50%;margin:0 auto;opacity:0;transition:opacity 0.2s}
+.nav-item.active .nav-dot{opacity:1}
+
+/* CHAT SCREEN */
+.chat-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.chat-messages::-webkit-scrollbar{width:3px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+.msg{display:flex;gap:10px;animation:fadeUp 0.3s ease}
+.msg.user{flex-direction:row-reverse}
+.msg-avatar{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.msg-avatar.ai{background:linear-gradient(135deg,var(--teal),var(--teal2));box-shadow:0 4px 12px rgba(0,201,167,0.25)}
+.msg-avatar.user{background:linear-gradient(135deg,#3b82f6,#1d4ed8);font-size:12px;font-weight:700;color:white}
+.bubble{max-width:calc(100% - 60px);padding:12px 16px;border-radius:16px;font-size:13.5px;line-height:1.7}
+.bubble.ai{background:var(--card);border:1px solid var(--border);border-top-left-radius:4px;color:var(--text)}
+.bubble.user{background:linear-gradient(135deg,var(--teal),var(--teal2));color:white;border-top-right-radius:4px;font-weight:500}
+.bubble strong{color:var(--teal);font-weight:600}
+.bubble.user strong{color:rgba(255,255,255,0.9)}
+.msg-actions{display:flex;gap:6px;margin-top:8px}
+.msg-action-btn{display:flex;align-items:center;gap:4px;padding:4px 8px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+.msg-action-btn:hover{border-color:var(--teal);color:var(--teal)}
+.disclaimer-text{font-size:11px;color:var(--text2);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-style:italic;line-height:1.5}
+
+/* TYPING */
+.typing-bubble{display:flex;gap:4px;align-items:center;padding:14px 18px}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:dotBounce 1.2s infinite}
+.tdot:nth-child(2){animation-delay:0.15s}
+.tdot:nth-child(3){animation-delay:0.3s}
+
+/* HISTORY */
+.page-header{padding:20px 18px 12px;flex-shrink:0}
+.page-title{font-size:20px;font-weight:800;color:var(--text)}
+.page-sub{font-size:12px;color:var(--text2);margin-top:3px}
+.search-box{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin:0 18px 16px}
+.search-box input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Inter',sans-serif;font-size:13px}
+.search-box input::placeholder{color:var(--text2)}
+.history-list{flex:1;overflow-y:auto;padding:0 18px}
+.history-item{padding:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;cursor:pointer;transition:all 0.2s}
+.history-item:hover{border-color:var(--teal);transform:translateX(2px)}
+.hi-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.hi-preview{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.hi-date{font-size:10px;color:var(--text2)}
+.hi-tag{font-size:10px;padding:2px 8px;background:rgba(0,201,167,0.1);color:var(--teal);border-radius:8px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty-state .es-icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:13px;line-height:1.6}
+
+/* PROFILE */
+.profile-scroll{flex:1;overflow-y:auto;padding:0 18px 24px}
+.profile-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px}
+.profile-user{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.user-avatar-big{width:60px;height:60px;background:linear-gradient(135deg,var(--teal),var(--teal2));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:white;font-family:'Syne',sans-serif;box-shadow:0 8px 24px rgba(0,201,167,0.3)}
+.user-info h3{font-size:17px;font-weight:700;color:var(--text)}
+.user-info p{font-size:12px;color:var(--text2);margin-top:2px}
+.section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:12px;font-weight:600}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px}
+.toggle{width:44px;height:24px;background:#333;border-radius:12px;cursor:pointer;position:relative;transition:background 0.3s;border:none;flex-shrink:0}
+.toggle.on{background:var(--teal)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:9px;top:3px;left:3px;transition:transform 0.3s;box-shadow:0 2px 6px rgba(0,0,0,0.2)}
+.toggle.on::after{transform:translateX(20px)}
+.loc-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;cursor:pointer;transition:all 0.2s}
+.loc-card:hover{border-color:var(--teal)}
+.loc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.loc-flag-big{font-size:28px}
+.edit-badge{font-size:11px;color:var(--teal);background:rgba(0,201,167,0.1);padding:4px 10px;border-radius:8px}
+.loc-name{font-size:16px;font-weight:700;color:var(--text)}
+.loc-detail{font-size:12px;color:var(--text2)}
+.action-btn{width:100%;padding:13px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px;transition:all 0.2s;font-weight:500}
+.action-btn:hover{border-color:var(--teal);color:var(--teal)}
+.action-btn.danger{color:#ef4444}
+.action-btn.danger:hover{border-color:#ef4444}
+.legal-feed{margin-bottom:14px}
+.feed-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;border-left:3px solid var(--teal)}
+.fi-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.fi-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.fi-date{font-size:10px;color:var(--text2);margin-top:6px}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:var(--navy2);border:1px solid var(--border);border-radius:24px;width:100%;max-width:400px;padding:28px;max-height:85vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.3s}
+.modal-overlay.show .modal{transform:translateY(0)}
+.modal-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.5}
+.social-btn{width:100%;padding:14px;border:1.5px solid var(--border);border-radius:14px;background:var(--card);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;transition:all 0.2s;font-weight:500}
+.social-btn:hover{border-color:var(--teal);background:rgba(0,201,167,0.05)}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text2);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.form-input{width:100%;padding:12px 14px;background:var(--navy3);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;margin-bottom:10px}
+.form-input:focus{border-color:var(--teal)}
+.form-input::placeholder{color:var(--text2)}
+.primary-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--teal),var(--teal2));border:none;border-radius:14px;color:white;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 16px rgba(0,201,167,0.3);margin-top:4px}
+.primary-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,201,167,0.4)}
+.close-btn{position:absolute;top:16px;right:16px;width:32px;height:32px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--text2);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.close-btn:hover{color:var(--text);border-color:var(--text2)}
+.modal-relative{position:relative}
+.loc-option{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;cursor:pointer;margin-bottom:8px;transition:all 0.2s}
+.loc-option:hover,.loc-option.selected{border-color:var(--teal);background:rgba(0,201,167,0.08)}
+.loc-flag{font-size:22px}
+.loc-info-text{flex:1}
+.loc-country{font-size:14px;font-weight:600;color:var(--text)}
+.loc-region{font-size:11px;color:var(--text2)}
+.check-icon{color:var(--teal);font-size:16px;display:none}
+.loc-option.selected .check-icon{display:block}
+
+/* UPLOAD PREVIEW */
+.file-preview{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:10px;margin:8px 18px 0;font-size:12px;color:var(--teal)}
+.file-preview-remove{margin-left:auto;cursor:pointer;color:var(--text2);font-size:16px}
+
+/* SPINNER */
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block}
+
+/* DEBUG BOX */
+.debug-box{background:#0a0a0a;border:1px solid #333;border-radius:12px;padding:14px;margin:8px 18px;font-size:11px;font-family:monospace;color:#0f0;max-height:150px;overflow-y:auto;display:none}
+.debug-box.show{display:block}
+
+/* API SETTINGS */
+.api-section{padding:8px 18px}
+.api-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
+.api-input-wrap{display:none;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;gap:8px}
+.api-input-wrap.show{display:flex}
+.api-input-wrap input{flex:1;background:transparent;border:none;outline:none;color:var(--teal);font-family:monospace;font-size:12px}
+</style>
+</head>
+<body>
+<div class="mesh-bg"></div>
+
+<!-- APP SHELL -->
+<div class="app-shell">
+
+  <!-- TOP BAR -->
+  <header class="top-bar">
+    <div class="logo-wrap">
+      <div class="logo-icon">⚖️</div>
+      <span class="logo-text">Lex<span>AI</span></span>
+    </div>
+    <button class="loc-badge" onclick="openLocModal()" id="locBadge">
+      🇬🇭 Accra · Global Coverage
+    </button>
+    <div class="top-actions">
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme" id="themeBtn">🌙</button>
+      <button class="icon-btn" onclick="showScreen('profile')" title="Menu">⋯</button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- HOME SCREEN -->
+    <div class="screen active" id="screen-home">
+      <div class="home-hero fade-up">
+        <div class="hero-icon float-anim">⚖️</div>
+        <h1 class="hero-title">Know Your Rights,<br><span>Anywhere in the World</span></h1>
+        <p class="hero-sub">Ask any legal question in plain language. Get clear, actionable answers — no law degree required.</p>
+      </div>
+
+      <div class="chips-section fade-up">
+        <div class="chips-label">Quick Topics</div>
+        <div class="chips-grid" id="chipsGrid">
+          <button class="chip" onclick="prefillChat('What are my tenant rights in Ghana under the Rent Control Act?')">🏠 Tenant Rights Ghana</button>
+          <button class="chip" onclick="prefillChat('I have an employment dispute with my employer in Ghana. What are my rights under the Labour Act 2003?')">💼 Employment Disputes</button>
+          <button class="chip" onclick="prefillChat('How do I file a consumer complaint in Ghana? What are my rights?')">🛒 Consumer Complaints</button>
+          <button class="chip" onclick="prefillChat('What are my rights in a divorce or family law matter in Ghana?')">👨‍👩‍👧 Family Law</button>
+          <button class="chip" onclick="prefillChat('Can you help me review a contract and explain my rights and risks?')">📄 Contract Review</button>
+          <button class="chip" onclick="prefillChat('What are my immigration rights and options?')">🌍 Immigration</button>
+          <button class="chip" onclick="prefillChat('What are my rights if I am arrested by police?')">🔒 Police & Arrest</button>
+          <button class="chip" onclick="prefillChat('How do I start a small business in Ghana and what legal steps do I need?')">🏢 Business Setup</button>
+        </div>
+      </div>
+
+      <div class="input-wrap">
+        <div class="input-box">
+          <div class="input-top">
+            <textarea id="homeInput" placeholder="Ask any legal question… e.g. 'What are my rights as a tenant?'" rows="1"
+              oninput="autoResize(this)" onkeydown="handleHomeKey(event)"></textarea>
+            <button class="send-btn" onclick="startChatFromHome()">➤</button>
+          </div>
+          <div class="input-actions">
+            <button class="ia-btn" id="micBtn" onclick="toggleVoice()" title="Voice input">🎤</button>
+            <button class="ia-btn" onclick="triggerUpload()" title="Upload file">📎</button>
+            <input type="file" id="fileInput" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt" onchange="handleFileSelect(event)">
+            <span style="font-size:11px;color:var(--text2);margin-left:4px" id="fileNameDisplay"></span>
+          </div>
+        </div>
+        <div id="filePreview" style="display:none" class="file-preview">
+          <span>📄</span>
+          <span id="filePreviewName"></span>
+          <span class="file-preview-remove" onclick="clearFile()">✕</span>
+        </div>
+      </div>
+
+      <div class="suggestions-row">
+        <button class="suggestion" onclick="prefillChat('Am I entitled to a severance package?')">💰 Severance pay?</button>
+        <button class="suggestion" onclick="prefillChat('Can my landlord increase rent without notice?')">🏠 Rent increase notice</button>
+        <button class="suggestion" onclick="prefillChat('What happens if I sign a contract without reading it?')">⚠️ Signing a contract</button>
+        <button class="suggestion" onclick="prefillChat('Do I need a lawyer to go to court?')">⚖️ Do I need a lawyer?</button>
+      </div>
+
+      <!-- API Settings -->
+      <div class="api-section">
+        <div class="api-toggle-row">
+          <span style="font-size:12px;color:var(--text2)">🔑 Use Real Claude API</span>
+          <button class="toggle" id="apiToggle" onclick="toggleApiMode(this)"></button>
+        </div>
+        <div class="api-input-wrap" id="apiInputWrap">
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-…  (paste your API key)"/>
+          <button onclick="saveApiKey()" style="font-size:11px;color:var(--teal);background:none;border:none;cursor:pointer;white-space:nowrap">Save Key</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT SCREEN -->
+    <div class="screen" id="screen-chat">
+      <div class="chat-messages" id="chatMessages"></div>
+      <div id="typingIndicator" style="display:none" class="msg">
+        <div class="msg-avatar ai balance-anim">⚖️</div>
+        <div class="bubble ai">
+          <div class="typing-bubble"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+        </div>
+      </div>
+      <div id="debugBox" class="debug-box"></div>
+      <div id="filePreviewChat" style="display:none" class="file-preview">
+        <span>📄</span>
+        <span id="filePreviewNameChat"></span>
+        <span class="file-preview-remove" onclick="clearFile()">✕</span>
+      </div>
+      <div class="input-wrap">
+        <div class="input-box">
+          <div class="input-top">
+            <textarea id="chatInput" placeholder="Ask a follow-up question…" rows="1"
+              oninput="autoResize(this)" onkeydown="handleChatKey(event)"></textarea>
+            <button class="send-btn" id="chatSendBtn" onclick="sendChatMessage()">➤</button>
+          </div>
+          <div class="input-actions">
+            <button class="ia-btn" id="micBtnChat" onclick="toggleVoice('chat')" title="Voice input">🎤</button>
+            <button class="ia-btn" onclick="triggerUpload()" title="Upload file">📎</button>
+            <button class="ia-btn" onclick="generateDemandLetter()" title="Generate demand letter">📝</button>
+            <span style="font-size:10px;color:var(--text2);margin-left:2px">Demand Letter</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY SCREEN -->
+    <div class="screen" id="screen-history">
+      <div class="page-header">
+        <div class="page-title">Chat History</div>
+        <div class="page-sub">Your past legal consultations</div>
+      </div>
+      <div class="search-box" style="margin:0 18px 16px">
+        <span style="color:var(--text2)">🔍</span>
+        <input type="text" placeholder="Search conversations…" oninput="filterHistory(this.value)"/>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <!-- PROFILE SCREEN -->
+    <div class="screen" id="screen-profile">
+      <div class="page-header">
+        <div class="page-title">Profile</div>
+        <div class="page-sub">Your LexAI settings</div>
+      </div>
+      <div class="profile-scroll">
+        <!-- User Card -->
+        <div class="profile-card" id="profileCard">
+          <div class="profile-user">
+            <div class="user-avatar-big" id="profileAvatar">G</div>
+            <div class="user-info">
+              <h3 id="profileName">Guest User</h3>
+              <p id="profileEmail">Sign in to save your history</p>
+            </div>
+          </div>
+          <button class="social-btn" onclick="openLoginModal()" id="loginProfileBtn">🔐 Sign In / Create Account</button>
+        </div>
+
+        <!-- Location Card -->
+        <div class="section-title" style="padding:0 2px;margin-bottom:10px">⚙️ Settings</div>
+
+        <div class="loc-card" onclick="openLocModal()">
+          <div class="loc-top">
+            <span class="loc-flag-big" id="profileLocFlag">🇬🇭</span>
+            <span class="edit-badge">Edit Location</span>
+          </div>
+          <div class="loc-name" id="profileLocName">Ghana</div>
+          <div class="loc-detail" id="profileLocDetail">Accra · Laws applied: Ghanaian jurisdiction</div>
+        </div>
+
+        <!-- Settings -->
+        <div class="profile-card">
+          <div class="section-title">Preferences</div>
+          <div class="setting-row">
+            <span class="setting-label">🌙 Dark Mode</span>
+            <button class="toggle on" id="darkModeToggle" onclick="toggleTheme()"></button>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">🔊 Read Aloud AI Answers</span>
+            <button class="toggle" id="ttsToggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">🌍 Language</span>
+            <select style="background:var(--navy3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;outline:none">
+              <option>English</option>
+              <option>Twi / Akan</option>
+              <option>French</option>
+              <option>Hausa</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Legal Updates Feed -->
+        <div class="section-title" style="padding:0 2px;margin-bottom:10px">📰 Legal Updates – Ghana</div>
+        <div class="legal-feed">
+          <div class="feed-item">
+            <div class="fi-title">New Rent Control Act Amendment 2024</div>
+            <div class="fi-desc">Landlords must now give 3 months notice before any rent increase. Advance payment limited to 6 months.</div>
+            <div class="fi-date">January 2025</div>
+          </div>
+          <div class="feed-item">
+            <div class="fi-title">Labour Commission Updates – Unfair Dismissal</div>
+            <div class="fi-desc">New guidelines clarify that workers dismissed without cause are entitled to 1 month pay per year of service.</div>
+            <div class="fi-date">December 2024</div>
+          </div>
+          <div class="feed-item">
+            <div class="fi-title">Consumer Protection Agency – New Complaint Portal</div>
+            <div class="fi-desc">Ghana's CPA launched an online portal for submitting consumer complaints. Response time target: 14 days.</div>
+            <div class="fi-date">November 2024</div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="section-title" style="padding:0 2px;margin-bottom:10px">📁 Your Data</div>
+        <button class="action-btn" onclick="exportChats()">📤 Export All Chats</button>
+        <button class="action-btn" onclick="clearHistory()">🗑️ Clear Chat History</button>
+        <button class="action-btn danger" onclick="logout()" id="logoutBtn" style="display:none">🚪 Sign Out</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="showScreen('home')" id="nav-home">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Home</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="showScreen('chat')" id="nav-chat">
+      <div class="nav-icon">💬</div>
+      <div class="nav-label">Chat</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="showScreen('history')" id="nav-history">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">History</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="showScreen('profile')" id="nav-profile">
+      <div class="nav-icon">👤</div>
+      <div class="nav-label">Profile</div>
+      <div class="nav-dot"></div>
+    </div>
+  </nav>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal modal-relative">
+    <button class="close-btn" onclick="closeModal('loginModal')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:40px;margin-bottom:10px">⚖️</div>
+      <div class="modal-title">Welcome to LexAI</div>
+      <div class="modal-sub">Sign in to save your history, get personalized answers, and access premium features.</div>
+    </div>
+    <button class="social-btn" onclick="loginWith('Google')">
+      <span style="font-size:18px">🔵</span> Continue with Google
+    </button>
+    <button class="social-btn" onclick="loginWith('Gmail')">
+      <span style="font-size:18px">📧</span> Continue with Gmail
+    </button>
+    <div class="divider">or</div>
+    <input type="email" class="form-input" id="emailInput" placeholder="Email address"/>
+    <input type="password" class="form-input" id="passwordInput" placeholder="Password"/>
+    <button class="primary-btn" onclick="loginWithEmail()">Sign In / Create Account</button>
+    <p style="text-align:center;font-size:11px;color:var(--text2);margin-top:14px">By continuing, you agree to LexAI's Terms of Service. Your data is encrypted and private.</p>
+  </div>
+</div>
+
+<!-- LOCATION MODAL -->
+<div class="modal-overlay" id="locModal">
+  <div class="modal modal-relative">
+    <button class="close-btn" onclick="closeModal('locModal')">✕</button>
+    <div class="modal-title">Your Legal Location</div>
+    <div class="modal-sub">LexAI will prioritize laws and rights specific to your country.</div>
+    <input type="text" class="form-input" placeholder="Search country…" oninput="filterLocations(this.value)" style="margin-bottom:14px"/>
+    <div id="locList">
+      <div class="loc-option selected" onclick="selectLocation(this,'🇬🇭','Ghana','Accra, Ghana')">
+        <span class="loc-flag">🇬🇭</span>
+        <div class="loc-info-text"><div class="loc-country">Ghana</div><div class="loc-region">Accra, West Africa</div></div>
+        <span class="check-icon">✓</span>
+      </div>
+      <div class="loc-option" onclick="selectLocation(this,'🇳🇬','Nigeria','Lagos, Nigeria')">
+        <span class="loc-flag">🇳🇬</span>
+        <div class="loc-info-text"><div class="loc-country">Nigeria</div><div class="loc-region">Lagos, West Africa</div></div>
+        <span class="check-icon">✓</span>
+      </div>
+      <div class="loc-option" onclick="selectLocation(this,'🇰🇪','Kenya','Nairobi, Kenya')">
+        <span class="loc-flag">🇰🇪</span>
+        <div class="loc-info-text"><div class="loc-country">Kenya</div><div class="loc-region">Nairobi, East Africa</div></div>
+        <span class="check-icon">✓</span>
+      </div>
+      <div class="loc-option" onclick="selectLocation(this,'🇿🇦','South Africa','Cape Town, South Africa')">
+        <span class="loc-flag">🇿🇦</span>
+        <div class="loc-info-text"><div class="loc-country">South Africa</div><div class="loc-region">Cape Town, Africa</div></div>
+        <span class="check-icon">✓</span>
+      </div>
+      <div class="loc-option" onclick="selectLocation(this,'🇺🇸','United States','USA')">
+        <span class="loc-flag">🇺🇸</span>
+        <div class="loc-info-text"><div class="loc-country">United States</div><div class="loc-region">North America</div></div>
+        <span class="check-icon">✓</span>
+      </div>
+      <div class="loc-option" onclick="selectLocation(this,'🇬🇧','United Kingdom','London, UK')">
+        <span class="loc-flag">🇬🇧</span>
+        <div class="loc-info-text"><div class="loc-country">United Kingdom</div><div class="loc-region">Europe</div></div>
+        <span class="check-icon">✓</span>
+      </div>
+      <div class="loc-option" onclick="selectLocation(this,'🇮🇳','India','New Delhi, India')">
+        <span class="loc-flag">🇮🇳</span>
+        <div class="loc-info-text"><div class="loc-country">India</div><div class="loc-region">South Asia</div></div>
+        <span class="check-icon">✓</span>
+      </div>
+      <div class="loc-option" onclick="selectLocation(this,'🌍','Global','Worldwide')">
+        <span class="loc-flag">🌍</span>
+        <div class="loc-info-text"><div class="loc-country">Global Mode</div><div class="loc-region">General international law</div></div>
+        <span class="check-icon">✓</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =================== BACKEND CONFIG ===================
+// 👇 Replace this with your Vercel URL after deploying
+const BACKEND_URL = 'YOUR_VERCEL_URL_HERE';
+const USE_BACKEND = BACKEND_URL !== 'YOUR_VERCEL_URL_HERE';
+
+// =================== STATE ===================
+let state = {
+  user: null,
+  location: { flag:'🇬🇭', country:'Ghana', detail:'Accra, Ghana' },
+  theme: 'dark',
+  chatHistory: [],
+  currentChat: [],
+  selectedFile: null,
+  isLoading: false,
+  isRecording: false,
+  recognition: null,
+  useRealApi: false,
+  apiKey: ''
+};
+
+// =================== INIT ===================
+(function init(){
+  try {
+    const saved = localStorage.getItem('lexai_state');
+    if(saved){
+      const p = JSON.parse(saved);
+      if(p.user) state.user = p.user;
+      if(p.location) state.location = p.location;
+      if(p.theme) state.theme = p.theme;
+      if(p.chatHistory) state.chatHistory = p.chatHistory;
+      if(p.apiKey) state.apiKey = p.apiKey;
+    }
+  } catch(e){}
+  applyTheme();
+  updateLocationUI();
+  updateUserUI();
+  renderHistory();
+  // Show login if no user
+  // Removed auto-show login for better UX — user can sign in via profile
+})();
+
+function saveState(){
+  try {
+    localStorage.setItem('lexai_state', JSON.stringify({
+      user: state.user,
+      location: state.location,
+      theme: state.theme,
+      chatHistory: state.chatHistory,
+      apiKey: state.apiKey
+    }));
+  } catch(e){}
+}
+
+// =================== THEME ===================
+function toggleTheme(){
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  saveState();
+}
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', state.theme);
+  const btn = document.getElementById('themeBtn');
+  const toggle = document.getElementById('darkModeToggle');
+  if(btn) btn.textContent = state.theme === 'dark' ? '☀️' : '🌙';
+  if(toggle){ toggle.classList.toggle('on', state.theme === 'dark'); }
+}
+
+// =================== SCREENS ===================
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if(name==='history') renderHistory();
+}
+
+// =================== LOCATION ===================
+function updateLocationUI(){
+  const {flag,country,detail} = state.location;
+  const badge = document.getElementById('locBadge');
+  if(badge) badge.innerHTML = `${flag} ${detail.split(',')[0]} · Global Coverage`;
+  const pFlag = document.getElementById('profileLocFlag');
+  const pName = document.getElementById('profileLocName');
+  const pDetail = document.getElementById('profileLocDetail');
+  if(pFlag) pFlag.textContent = flag;
+  if(pName) pName.textContent = country;
+  if(pDetail) pDetail.textContent = `${detail} · Laws applied: ${country} jurisdiction`;
+}
+
+function openLocModal(){ document.getElementById('locModal').classList.add('show'); }
+
+function selectLocation(el, flag, country, detail){
+  document.querySelectorAll('.loc-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  state.location = {flag, country, detail};
+  saveState();
+  updateLocationUI();
+  // Update legal feed label
+  setTimeout(()=>closeModal('locModal'), 300);
+}
+
+function filterLocations(q){
+  const opts = document.querySelectorAll('.loc-option');
+  opts.forEach(o=>{
+    const name = o.querySelector('.loc-country').textContent.toLowerCase();
+    o.style.display = name.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// =================== AUTH ===================
+function openLoginModal(){ document.getElementById('loginModal').classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function loginWith(provider){
+  const fakeUser = {
+    name: provider === 'Google' ? 'Nana Adjoa' : 'Kwame Mensah',
+    email: `user@${provider.toLowerCase()}.com`,
+    avatar: provider === 'Google' ? 'N' : 'K'
+  };
+  completeLogin(fakeUser);
+}
+
+function loginWithEmail(){
+  const email = document.getElementById('emailInput').value.trim();
+  const pwd = document.getElementById('passwordInput').value;
+  if(!email){ alert('Please enter your email.'); return; }
+  const name = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+  completeLogin({ name, email, avatar: name.charAt(0).toUpperCase() });
+}
+
+function completeLogin(user){
+  state.user = user;
+  saveState();
+  updateUserUI();
+  closeModal('loginModal');
+}
+
+function updateUserUI(){
+  const u = state.user;
+  const pName = document.getElementById('profileName');
+  const pEmail = document.getElementById('profileEmail');
+  const pAvatar = document.getElementById('profileAvatar');
+  const loginBtn = document.getElementById('loginProfileBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  if(u){
+    if(pName) pName.textContent = u.name;
+    if(pEmail) pEmail.textContent = u.email;
+    if(pAvatar) pAvatar.textContent = u.avatar || u.name.charAt(0);
+    if(loginBtn) loginBtn.style.display='none';
+    if(logoutBtn) logoutBtn.style.display='flex';
+  } else {
+    if(pName) pName.textContent = 'Guest User';
+    if(pEmail) pEmail.textContent = 'Sign in to save your history';
+    if(pAvatar) pAvatar.textContent = '👤';
+    if(loginBtn) loginBtn.style.display='flex';
+    if(logoutBtn) logoutBtn.style.display='none';
+  }
+}
+
+function logout(){
+  if(!confirm('Sign out of LexAI?')) return;
+  state.user = null;
+  saveState();
+  updateUserUI();
+  showScreen('home');
+}
+
+// =================== CHAT ===================
+const SAMPLE_RESPONSES = {
+  tenant: `**Your Tenant Rights in Ghana** 🏠
+
+Under Ghana's **Rent Control Act (Act 220)** and its amendments, here are your key rights:
+
+**1. Notice Before Eviction**
+Your landlord must give you a minimum of **3 months written notice** before eviction. Evicting you without notice is illegal.
+
+**2. Advance Rent Limits**
+Landlords can only collect a maximum of **6 months advance rent**. Demanding a full year or more upfront is unlawful.
+
+**3. Rent Increases**
+Any rent increase requires at least **3 months written notice**. Sudden increases are not permitted under the Act.
+
+**4. Habitability**
+You are entitled to a dwelling that is in **good repair and habitable** condition. The landlord is responsible for structural repairs.
+
+**What to do if your rights are violated:**
+- Contact the **Rent Control Department** in your region
+- File a complaint with the **Commission on Human Rights and Administrative Justice (CHRAJ)**
+- Seek legal aid from the **Legal Aid Commission** (free for low-income tenants)`,
+
+  employment: `**Your Employment Rights in Ghana** 💼
+
+Under the **Labour Act 2003 (Act 651)**, you have strong protections:
+
+**1. Unfair Dismissal**
+You cannot be dismissed without a **valid reason** and **proper notice**. If dismissed unfairly, you are entitled to:
+- 1 month's pay for each year of service
+- Any outstanding leave pay
+
+**2. Working Hours & Overtime**
+- Standard work week: **8 hours/day, 40 hours/week**
+- Overtime must be paid at **1.5x your normal rate**
+
+**3. Maternity Leave**
+Female workers are entitled to **12 weeks paid maternity leave**.
+
+**4. Minimum Wage**
+Check the current **National Daily Minimum Wage** set by the National Tripartite Committee.
+
+**Steps to take for a dispute:**
+1. File a complaint with the **National Labour Commission**
+2. Contact the **Ghana Trades Union Congress (TUC)**
+3. Seek help from the **Legal Aid Commission**`,
+
+  arrest: `**Your Rights When Arrested in Ghana** 🔒
+
+Under the **1992 Constitution of Ghana**, you have these fundamental rights upon arrest:
+
+**1. Right to Know Why**
+Police must **immediately tell you** the reason for your arrest. You have the right to demand this.
+
+**2. Right to Remain Silent**
+You have the **right to silence**. Anything you say can be used against you. Do not answer questions without a lawyer.
+
+**3. Right to a Lawyer**
+You must be given the opportunity to **contact a lawyer**. If you cannot afford one, request the **Legal Aid Commission**.
+
+**4. 48-Hour Rule**
+Police can only detain you for **48 hours** without charging you or bringing you before a court.
+
+**5. No Torture or Inhumane Treatment**
+Any form of torture, humiliation, or degrading treatment is unconstitutional and criminal.
+
+**If your rights are violated:**
+- Contact the **Commission on Human Rights (CHRAJ)**: 0800-800-900
+- Report to the **Police Professional Standards Bureau (PPSB)**`,
+
+  general: `**General Legal Information** ⚖️
+
+Thank you for your question. Here's what I can share based on your location (**${()=>state.location.country}**):
+
+**Understanding Your Rights**
+Every person has fundamental legal rights protected by their country's constitution and laws. In Ghana specifically, the **1992 Constitution** is the supreme law and protects your basic human rights.
+
+**When You May Need a Lawyer**
+Consider getting professional legal help if:
+- You are facing criminal charges
+- You are involved in a contract dispute over significant money
+- You are dealing with family matters like divorce or custody
+- Your employer has dismissed you unfairly
+
+**Free Legal Help in Ghana**
+- **Legal Aid Commission**: Provides free legal services to those who cannot afford a lawyer
+- **CHRAJ**: Handles human rights violations and corruption cases
+- **National Labour Commission**: Handles employment disputes
+
+**Next Steps**
+Tell me more about your specific situation and I'll give you more targeted information about your rights and options.`,
+
+  contract: `**Contract Review & Your Rights** 📄
+
+**Key Things to Check in Any Contract:**
+
+**1. Parties & Dates**
+Make sure all names, dates, and contact details are correct before signing.
+
+**2. Payment Terms**
+- What is being paid, and when?
+- Are there penalties for late payment?
+- What currency and payment method?
+
+**3. Termination Clause**
+- How can either party exit the contract?
+- What notice period is required?
+- Are there penalties for early exit?
+
+**4. Dispute Resolution**
+- Which country's laws govern the contract?
+- Is there a mediation or arbitration clause?
+
+**Your Rights in Ghana**
+Under the **Contracts Act (Act 25)** and common law principles, a contract must have:
+- **Offer** (one party proposes terms)
+- **Acceptance** (the other agrees)
+- **Consideration** (something of value exchanged)
+- **Capacity** (both parties must be adults of sound mind)
+
+**⚠️ Red Flags to Watch For:**
+- Unusual penalty clauses
+- One-sided termination rights
+- Vague payment terms
+- Missing dispute resolution clause
+
+Upload your contract above and I'll analyze it in detail for you.`
+};
+
+function getSmartResponse(msg){
+  const m = msg.toLowerCase();
+  if(m.includes('tenant')||m.includes('landlord')||m.includes('rent')||m.includes('evict')) return SAMPLE_RESPONSES.tenant;
+  if(m.includes('employ')||m.includes('dismiss')||m.includes('fired')||m.includes('salary')||m.includes('overtime')) return SAMPLE_RESPONSES.employment;
+  if(m.includes('arrest')||m.includes('police')||m.includes('detain')||m.includes('criminal')||m.includes('rights if')) return SAMPLE_RESPONSES.arrest;
+  if(m.includes('contract')||m.includes('agreement')||m.includes('sign')||m.includes('review')) return SAMPLE_RESPONSES.contract;
+  return SAMPLE_RESPONSES.general.replace('${()=>state.location.country}', state.location.country);
+}
+
+function buildSystemPrompt(){
+  return `You are LexAI, a global legal rights assistant. The user is located in ${state.location.detail}.
+
+CRITICAL INSTRUCTIONS:
+1. ALWAYS prioritize laws and legal rights specific to ${state.location.country}
+2. Cite specific laws by name when relevant (e.g. Ghana's Labour Act 2003, Rent Control Act)
+3. Explain in simple, plain language — no legal jargon
+4. Use **bold** for key terms and important points
+5. Structure with numbered points for clarity
+6. Always mention free legal aid resources available in ${state.location.country}
+7. End with practical next steps the user can take TODAY
+8. Add a disclaimer that this is general information, not legal advice
+9. Be empathetic — many users are in stressful situations
+10. If laws differ significantly from Ghana to other countries, note this`;
+}
+
+async function sendMessage(msg, fromHome=false){
+  if(state.isLoading || !msg.trim()) return;
+  
+  // Switch to chat screen
+  showScreen('chat');
+  
+  // If file attached, append to message
+  if(state.selectedFile){
+    msg = `[File attached: ${state.selectedFile.name}]\n\n${msg}`;
+  }
+
+  state.isLoading = true;
+  document.getElementById('chatSendBtn').disabled = true;
+
+  // Add user message
+  appendMessage('user', msg);
+  state.currentChat.push({role:'user', content:msg});
+  
+  // Clear input
+  document.getElementById('chatInput').value = '';
+  document.getElementById('chatInput').style.height = 'auto';
+  clearFile();
+
+  // Show typing
+  document.getElementById('typingIndicator').style.display = 'flex';
+  scrollChat();
+
+  // Build debug info
+  const fullPrompt = buildSystemPrompt();
+  const debugBox = document.getElementById('debugBox');
+  debugBox.textContent = `SYSTEM:\n${fullPrompt}\n\nUSER:\n${msg}`;
+
+  let response = '';
+  
+  try {
+    if(USE_BACKEND){
+      // ✅ SECURE: Call Vercel backend — API key hidden on server
+      const res = await fetch(`${BACKEND_URL}/api/chat`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          messages: state.currentChat,
+          location: state.location,
+          topic: 'Legal rights'
+        })
+      });
+      const data = await res.json();
+      if(data.error) throw new Error(data.error);
+      response = data.response || 'Sorry, I could not process that.';
+    } else if(state.useRealApi && state.apiKey){
+      // Direct API (testing only — key visible in browser)
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':state.apiKey,'anthropic-version':'2023-06-01'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:1000,
+          system: fullPrompt,
+          messages: state.currentChat
+        })
+      });
+      const data = await res.json();
+      response = data.content?.[0]?.text || 'Sorry, I could not process that.';
+    } else {
+      // Demo mode — smart sample responses
+      await new Promise(r=>setTimeout(r, 1200 + Math.random()*800));
+      response = getSmartResponse(msg);
+      response = response.replace('${()=>state.location.country}', state.location.country);
+    }
+  } catch(e){
+    response = `I'm having trouble connecting right now. Please check your connection and try again.\n\nIn the meantime, for urgent legal matters in ${state.location.country}, you can contact the Legal Aid Commission for free assistance.`;
+  }
+
+  document.getElementById('typingIndicator').style.display = 'none';
+  appendMessage('ai', response);
+  state.currentChat.push({role:'assistant', content:response});
+  
+  // Save to history
+  if(state.currentChat.length === 2){
+    state.chatHistory.unshift({
+      id: Date.now(),
+      title: msg.length > 50 ? msg.substring(0,50)+'…' : msg,
+      preview: response.substring(0,100).replace(/\*\*/g,'')+'…',
+      date: new Date().toLocaleDateString(),
+      tag: detectTag(msg),
+      messages: [...state.currentChat]
+    });
+    saveState();
+  }
+
+  // TTS if enabled
+  if(document.getElementById('ttsToggle').classList.contains('on')){
+    speak(response.replace(/\*\*/g,'').replace(/\n/g,' '));
+  }
+
+  state.isLoading = false;
+  document.getElementById('chatSendBtn').disabled = false;
+  scrollChat();
+}
+
+function detectTag(msg){
+  const m = msg.toLowerCase();
+  if(m.includes('tenant')||m.includes('rent')) return 'Tenant';
+  if(m.includes('employ')||m.includes('work')) return 'Employment';
+  if(m.includes('arrest')||m.includes('police')) return 'Criminal';
+  if(m.includes('contract')) return 'Contract';
+  if(m.includes('family')||m.includes('divorce')) return 'Family';
+  return 'General';
+}
+
+function appendMessage(role, content){
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  
+  const initials = state.user ? state.user.avatar : 'U';
+  
+  if(role === 'user'){
+    div.innerHTML = `
+      <div class="msg-avatar user">${initials}</div>
+      <div class="bubble user">${escHtml(content)}</div>`;
+  } else {
+    const formatted = formatResponse(content);
+    div.innerHTML = `
+      <div class="msg-avatar ai balance-anim">⚖️</div>
+      <div style="flex:1;min-width:0">
+        <div class="bubble ai">${formatted}<div class="disclaimer-text">⚠️ LexAI provides general legal information, not legal advice. Laws vary by region. For serious matters, consult a qualified lawyer in ${state.location.country}.</div></div>
+        <div class="msg-actions">
+          <button class="msg-action-btn" onclick="copyText(this,'${btoa(encodeURIComponent(content))}')">📋 Copy</button>
+          <button class="msg-action-btn" onclick="speakText('${btoa(encodeURIComponent(content))}')">🔊 Read</button>
+          <button class="msg-action-btn" onclick="thumbs(this,'up')">👍</button>
+          <button class="msg-action-btn" onclick="thumbs(this,'down')">👎</button>
+        </div>
+      </div>`;
+  }
+  container.appendChild(div);
+  scrollChat();
+}
+
+function formatResponse(text){
+  return text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\n\n/g,'</p><p style="margin-top:10px">')
+    .replace(/\n/g,'<br>')
+    .replace(/^/,'<p>').replace(/$/,'</p>');
+}
+
+function escHtml(t){
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scrollChat(){
+  const c = document.getElementById('chatMessages');
+  c.scrollTop = c.scrollHeight;
+}
+
+function copyText(btn, b64){
+  navigator.clipboard.writeText(decodeURIComponent(atob(b64)));
+  btn.textContent = '✓ Copied!';
+  setTimeout(()=>btn.textContent='📋 Copy', 2000);
+}
+
+function speakText(b64){ speak(decodeURIComponent(atob(b64)).replace(/\*\*/g,'').replace(/\n/g,' ')); }
+
+function thumbs(btn, dir){
+  btn.textContent = dir==='up' ? '👍✓' : '👎✓';
+  btn.style.color = 'var(--teal)';
+  btn.style.borderColor = 'var(--teal)';
+}
+
+function startChatFromHome(){
+  const input = document.getElementById('homeInput');
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value = '';
+  sendMessage(msg, true);
+}
+
+function prefillChat(text){
+  showScreen('chat');
+  sendMessage(text);
+}
+
+function handleHomeKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); startChatFromHome(); }
+}
+function handleChatKey(e){
+  if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendChatMessage(); }
+}
+
+function sendChatMessage(){
+  const input = document.getElementById('chatInput');
+  sendMessage(input.value.trim());
+}
+
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,100)+'px';
+}
+
+// =================== VOICE ===================
+function toggleVoice(ctx){
+  if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)){
+    alert('Voice input is not supported in your browser. Try Chrome.');
+    return;
+  }
+  const btnId = ctx==='chat' ? 'micBtnChat' : 'micBtn';
+  const btn = document.getElementById(btnId);
+  
+  if(state.isRecording){
+    state.recognition && state.recognition.stop();
+    state.isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  state.recognition = new SR();
+  state.recognition.continuous = false;
+  state.recognition.interimResults = false;
+  state.recognition.lang = 'en-US';
+  
+  state.recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    const inputId = ctx==='chat' ? 'chatInput' : 'homeInput';
+    document.getElementById(inputId).value = transcript;
+    state.isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+  };
+
+  state.recognition.onerror = () => {
+    state.isRecording = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+  };
+
+  state.recognition.start();
+  state.isRecording = true;
+  btn.classList.add('recording');
+  btn.textContent = '⏹️';
+}
+
+function speak(text){
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text.substring(0,500));
+  utt.rate = 0.95;
+  window.speechSynthesis.speak(utt);
+}
+
+// =================== FILE UPLOAD ===================
+function triggerUpload(){ document.getElementById('fileInput').click(); }
+
+function handleFileSelect(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  state.selectedFile = file;
+  // Show preview on home
+  const prev = document.getElementById('filePreview');
+  const prevName = document.getElementById('filePreviewName');
+  if(prev){ prev.style.display='flex'; prevName.textContent=file.name; }
+  // Show preview on chat
+  const prevC = document.getElementById('filePreviewChat');
+  const prevNameC = document.getElementById('filePreviewNameChat');
+  if(prevC){ prevC.style.display='flex'; prevNameC.textContent=file.name; }
+  document.getElementById('fileNameDisplay').textContent = file.name;
+}
+
+function clearFile(){
+  state.selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('filePreview').style.display='none';
+  document.getElementById('filePreviewChat').style.display='none';
+  document.getElementById('fileNameDisplay').textContent='';
+}
+
+// =================== DEMAND LETTER ===================
+function generateDemandLetter(){
+  const letter = `**FORMAL DEMAND LETTER**
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Date:** ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}
+
+**From:**
+[Your Full Name]
+[Your Address]
+[City, ${state.location.country}]
+[Phone / Email]
+
+**To:**
+[Recipient Full Name / Company]
+[Recipient Address]
+
+**RE: Formal Demand for [State Issue]**
+
+Dear [Recipient Name],
+
+I write to formally notify you of my claim and to demand resolution of the following matter:
+
+**Background:**
+[Describe your situation clearly — what happened, when, and who was involved.]
+
+**Your Legal Obligation:**
+Under the laws of ${state.location.country}, specifically [relevant law], you are required to [state what they must do].
+
+**My Demand:**
+I hereby demand that you:
+1. [Specific action #1]
+2. [Specific action #2]
+3. [Payment of GHS/USD amount if applicable]
+
+**Deadline:**
+You have **14 days** from the date of this letter (by [date]) to respond and fulfill the above demands.
+
+**Consequences of Non-Compliance:**
+If you fail to comply within the stated timeframe, I will be compelled to:
+- Report this matter to the relevant regulatory authority
+- Seek legal redress through the appropriate court
+- Pursue all remedies available under ${state.location.country} law
+
+This letter serves as formal notice of my claim.
+
+Yours faithfully,
+
+[Your Signature]
+[Your Printed Name]
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+*Generated by LexAI — Edit before sending. Consult a lawyer for serious matters.*`;
+
+  appendMessage('ai', letter);
+}
+
+// =================== HISTORY ===================
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if(!list) return;
+  if(state.chatHistory.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="es-icon">💬</div><p>No chat history yet.<br>Start asking legal questions and they'll appear here.</p></div>`;
+    return;
+  }
+  list.innerHTML = state.chatHistory.map(h=>`
+    <div class="history-item" onclick="loadHistoryChat(${h.id})">
+      <div class="hi-title">${escHtml(h.title)}</div>
+      <div class="hi-preview">${escHtml(h.preview)}</div>
+      <div class="hi-meta">
+        <span class="hi-date">📅 ${h.date}</span>
+        <span class="hi-tag">${h.tag}</span>
+      </div>
+    </div>`).join('');
+}
+
+function filterHistory(q){
+  const items = document.querySelectorAll('.history-item');
+  items.forEach(item=>{
+    item.style.display = item.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function loadHistoryChat(id){
+  const chat = state.chatHistory.find(h=>h.id===id);
+  if(!chat) return;
+  state.currentChat = [...chat.messages];
+  document.getElementById('chatMessages').innerHTML = '';
+  chat.messages.forEach(m=>appendMessage(m.role, m.content));
+  showScreen('chat');
+}
+
+function clearHistory(){
+  if(!confirm('Delete all chat history?')) return;
+  state.chatHistory = [];
+  saveState();
+  renderHistory();
+}
+
+function exportChats(){
+  const text = state.chatHistory.map(h=>
+    `=== ${h.title} (${h.date}) ===\n${h.messages.map(m=>`[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n')}`
+  ).join('\n\n' + '='.repeat(40) + '\n\n');
+  const blob = new Blob([text], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lexai-chats.txt';
+  a.click();
+}
+
+// =================== API SETTINGS ===================
+function toggleApiMode(btn){
+  btn.classList.toggle('on');
+  state.useRealApi = btn.classList.contains('on');
+  const wrap = document.getElementById('apiInputWrap');
+  wrap.classList.toggle('show', state.useRealApi);
+  if(state.useRealApi){
+    const db = document.getElementById('debugBox');
+    db.classList.add('show');
+  }
+}
+
+function saveApiKey(){
+  state.apiKey = document.getElementById('apiKeyInput').value.trim();
+  saveState();
+  alert('API key saved! LexAI will now use real Claude AI.');
+}
+
+// =================== UTILS ===================
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,100)+'px';
+}
+</script>
+</body>
+</html>

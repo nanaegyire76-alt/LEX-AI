@@ -1,0 +1,9 @@
+{
+  "name": "lexai-backend",
+  "version": "1.0.0",
+  "description": "LexAI secure backend API",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev"
+  }
+}
