@@ -1,21 +1,30 @@
-export default async function handler(req, res) {
-  // Allow requests from any origin (your app)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+export const config = {
+  runtime: 'edge',
+};
 
+export default async function handler(req) {
   // Handle preflight
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
+  }
 
   try {
-    const { messages, location, topic } = req.body;
+    const { messages, location, topic } = await req.json();
 
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Invalid messages format' });
-    }
-
-    // Build jurisdiction-aware system prompt
     const country = location?.country || 'Ghana';
     const detail = location?.detail || 'Accra, Ghana';
 
@@ -30,39 +39,39 @@ CRITICAL INSTRUCTIONS:
 6. Always mention free legal aid resources in ${country}
 7. End with practical next steps the user can take TODAY
 8. Be empathetic — many users are in stressful situations
-9. Keep responses clear and actionable
 
 Current topic: ${topic || 'General legal rights'}`;
 
-    // Call Claude API using the secret key stored on server
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
         system: systemPrompt,
-        messages: messages
-      })
+        messages: messages,
+      }),
     });
-
-    if (!response.ok) {
-      const err = await response.json();
-      console.error('Claude API error:', err);
-      return res.status(response.status).json({ error: 'AI service error. Please try again.' });
-    }
 
     const data = await response.json();
     const text = data.content?.[0]?.text || 'Sorry, I could not generate a response.';
 
-    return res.status(200).json({ response: text });
+    return new Response(JSON.stringify({ response: text }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
 
   } catch (error) {
-    console.error('Server error:', error);
-    return res.status(500).json({ error: 'Server error. Please try again.' });
+    return new Response(JSON.stringify({ error: 'Server error. Please try again.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
   }
 }
